@@ -17,7 +17,7 @@ echo ""
 
 # Index the contaminants file
 echo "### 03. Index the contaminants file"
-#bash $WD/scripts/index.sh "$WD/res/contaminants.fasta_filtered" "$WD/res/contaminants_idx"
+bash $WD/scripts/index.sh "$WD/res/contaminants.fasta_filtered" "$WD/res/contaminants_idx"
 echo ""
 
 # Merge the samples into a single file
@@ -39,7 +39,8 @@ list_of_merged_ids=$(ls $WD/out/merged | grep -E "\.fastq")
 for sid in $list_of_merged_ids
 do
     cutadapt -m 18 -a TGGAATTCTCGGGTGCCAAGG --discard-untrimmed \
-     -o "$WD/out/trimmed/$sid" "$WD/out/merged/$sid" > "$WD/log/cutadapt/$sid"
+     -o "$WD/out/trimmed/$sid" "$WD/out/merged/$sid" > "$WD/log/cutadapt/$sid.log" 2>&1
+    echo "Sample $sid merged."
 done
 echo ""
 
@@ -57,10 +58,29 @@ do
 done 
 echo ""
 
-# TODO: create a log file containing information from cutadapt and star logs
-# (this should be a single log file, and information should be *appended* to it on each run)
+# Log file
+mkdir -p $WD/log
+log_file="$WD/log/pipeline.log"
+current_date_time=$(date "+%d-%m-%Y %H:%M:%S")
+echo "=== Decontamination: $current_date_time ===" >> "$log_file"
 # - cutadapt: Reads with adapters and total basepairs
+list_cutadapt=$(ls $WD/log/cutadapt | grep -E "\.fastq")
+for sid in $list_cutadapt
+do
+   echo "=== Cutadapt Log $sid ===" >> "$log_file"
+   grep "Reads with adapters:" "$WD/log/cutadapt/$sid" >> "$log_file"
+   grep "Total basepairs processed:" "$WD/log/cutadapt/$sid" >> "$log_file"
+done
+echo "" >> "$log_file"
 # - star: Percentages of uniquely mapped reads, reads mapped to multiple loci, and to too many loci
-# tip: use grep to filter the lines you're interested in
+list_star=$(ls $WD/out/star)
+for dir in $list_star
+do
+   echo "=== STAR Log $dir ===" >> "$log_file"
+   grep "Uniquely mapped reads %" "$WD/out/star/$dir/Log.final.out" >> "$log_file"
+   grep "% of reads mapped to multiple loci" "$WD/out/star/$dir/Log.final.out" >> "$log_file"
+   grep "% of reads mapped to too many loci" "$WD/out/star/$dir/Log.final.out" >> "$log_file"
+done
+echo "" >> "$log_file"
 
 echo "Decontamination completed"
