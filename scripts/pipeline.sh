@@ -12,17 +12,26 @@ done
 bash $WD/scripts/download.sh "https://bioinformatics.cnio.es/data/courses/decont/contaminants.fasta.gz" "$WD/res" "yes" "small nuclear RNA"
 
 # Index the contaminants file
-#bash scripts/index.sh res/contaminants.fasta res/contaminants_idx
+#bash $WD/scripts/index.sh "$WD/res/contaminants.fasta_filtered" "$WD/res/contaminants_idx"
 
 # Merge the samples into a single file
-#for sid in $(<list_of_sample_ids>) #TODO
-#do
-#    bash scripts/merge_fastqs.sh data out/merged $sid
-#done
+mkdir -p $WD/out/merged
+list_of_sample_ids=$(ls $WD/data | grep -E "\.fastq" | cut -d "-" -f 1 | sort -u)
+for sid in $list_of_sample_ids
+do
+    bash $WD/scripts/merge_fastqs.sh $WD/data $WD/out/merged $sid
+done
 
-# TODO: run cutadapt for all merged files
-# cutadapt -m 18 -a TGGAATTCTCGGGTGCCAAGG --discard-untrimmed \
-#     -o <trimmed_file> <input_file> > <log_file>
+# Remove the adapters from the merged samples
+mkdir -p $WD/out/trimmed
+mkdir -p $WD/log/trimmed
+list_of_merged_ids=$(ls $WD/out/merged)
+for sid in $list_of_merged_ids
+do
+    cutadapt -m 18 -a TGGAATTCTCGGGTGCCAAGG --discard-untrimmed \
+     -o "$WD/out/trimmed/$sid" "$WD/out/merged/$sid" > "$WD/log/cutadapt/$sid"
+done
+
 
 # TODO: run STAR for all trimmed files
 #for fname in out/trimmed/*.fastq.gz
