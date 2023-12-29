@@ -14,5 +14,5 @@ output_dir="$2"
 sample_id="$3"
 
 mkdir -p "$output_dir"
-cat "$sample_dir/$sample_id"* > "$output_dir/${sample_id}_merged.fastq"
+cat "$sample_dir/$sample_id"* > "$output_dir/${sample_id}.fastq.gz"
 
