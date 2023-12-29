@@ -8,9 +8,13 @@ fi
 genomefile=$1
 outdir=$2
 
-mkdir -p "$outdir"
+if [ -e "$outdir/SAindex" ] || [ -e "$outdir/sa" ] || [ -e "$outdir/sjdb" ] || [ -e "$outdir/genomeParameters.txt" ]; then
+    echo "The output already exists in $outdir. Skipping index."
+else
+	mkdir -p "$outdir"
 
 # The STAR command is provided for you. You should replace the parts surrounded
 # by "<>" and uncomment it.
-STAR --runThreadN 4 --runMode genomeGenerate --genomeDir "$outdir" \
-     --genomeFastaFiles "$genomefile" --genomeSAindexNbases 9
+	STAR --runThreadN 4 --runMode genomeGenerate --genomeDir "$outdir" \
+     	     --genomeFastaFiles "$genomefile" --genomeSAindexNbases 9
+fi

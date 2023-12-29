@@ -1,12 +1,14 @@
 export WD=~/decont
-
+echo ""
 #Download all the files specified in data/filenames
 echo "### 01. Download the data"
-list_of_urls=$(cat $WD/data/urls)
-for url in $list_of_urls
-do
-    bash $WD/scripts/download.sh "$url" "$WD/data"
-done
+#list_of_urls=$(cat $WD/data/urls)
+#for url in $list_of_urls
+#do
+#    bash $WD/scripts/download.sh "$url" "$WD/data"
+#done
+# Replace the loop with a wget one-liner
+wget --directory-prefix="$WD/data" --input-file="$WD/data/urls" -P "$WD/data" --no-clobber
 echo ""
 
 # Download the contaminants fasta file, uncompress it, and
@@ -51,10 +53,15 @@ list_of_trimmed_ids=$(ls $WD/out/trimmed | grep -E "\.fastq")
 for fname in $list_of_trimmed_ids
 do
    sid=$(basename "$fname" .fastq.gz)
-   mkdir -p $WD/out/star/$sid
-   STAR --runThreadN 4 --genomeDir "$WD/res/contaminants_idx" \
-        --outReadsUnmapped Fastx --readFilesIn "$WD/out/trimmed/$fname" \
-        --readFilesCommand gunzip -c --outFileNamePrefix "$WD/out/star/$sid/"
+   output_dir="$WD/out/star/$sid"
+   if [ -d "$output_dir" ]; then
+      echo "The directory $output_dir already exists. Skipping alignement for $sid."
+   else
+   	mkdir -p $WD/out/star/$sid
+   	STAR --runThreadN 4 --genomeDir "$WD/res/contaminants_idx" \
+             --outReadsUnmapped Fastx --readFilesIn "$WD/out/trimmed/$fname" \
+             --readFilesCommand gunzip -c --outFileNamePrefix "$WD/out/star/$sid/"
+   fi
 done 
 echo ""
 
